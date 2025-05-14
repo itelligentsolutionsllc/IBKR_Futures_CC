@@ -1,18 +1,22 @@
-# 1) Use a public, headless IB Gateway image
-FROM ghcr.io/gnzsnz/ib-gateway:10.30.1v
+# 1) Use a public, headless IB Gateway image
+FROM ghcr.io/gnzsnz/ib-gateway:10.30.1v  # 
 
-# 2) Switch to root so we can install Python3 & pip
+# 2) Switch to root to install Python venv support
 USER root
 RUN apt-get update \
- && apt-get install -y --no-install-recommends python3 python3-pip \
+ && apt-get install -y --no-install-recommends python3 python3-venv \
  && rm -rf /var/lib/apt/lists/*
 
-# 3) Copy your bot & install its deps
+# 3) Create and activate a venv, then install your Python deps
+RUN python3 -m venv /venv
+ENV PATH="/venv/bin:${PATH}"
+
 WORKDIR /app
 COPY requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 4) Copy your bot code
 COPY . .
 
-# 4) Launch your Python bot.
-#    The base image already starts IB Gateway for you on port 7496.
-CMD ["python3", "covered call strategy.py"]
+# 5) Launch your bot (gateway is already running in the base image)
+CMD ["python", "covered call strategy.py"]
