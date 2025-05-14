@@ -65,7 +65,7 @@ logging.getLogger('ib_insync').setLevel(logging.CRITICAL)
 # ───────── CONFIG ─────────
 
 IB_HOST          = '127.0.0.1'
-IB_PORT          = 4001      # live trading gateway
+IB_PORT          = 4002      # live trading gateway
 CLIENT_ID        = 3
 
 UNDERLYING       = 'MES'
