@@ -1,24 +1,27 @@
+# Use slim Python build
 FROM python:3.10-slim
 
-# 1) Install Java & tools
+# Install Java & unzip
 RUN apt-get update \
- && apt-get install -y default-jre-headless wget unzip
+ && apt-get install -y --no-install-recommends default-jre-headless wget unzip \
+ && rm -rf /var/lib/apt/lists/*
 
-# 2) Download & install IB Gateway silently
-WORKDIR /ibgw
-RUN wget https://download2.interactivebrokers.com/installers/ibgateway/stable-standalone/ibgateway-stable-standalone-linux-x64.sh \
- && chmod +x ibgateway-stable-standalone-linux-x64.sh \
- && ./ibgateway-stable-standalone-linux-x64.sh --silent
+# Download & unpack IB Gateway ZIP (no wizard)
+WORKDIR /opt/ibgw
+RUN wget https://download2.interactivebrokers.com/installers/ibgateway/stable-standalone/ibgateway-stable-standalone-linux-x64.zip \
+ && unzip ibgateway-stable-standalone-linux-x64.zip \
+ && rm ibgateway-stable-standalone-linux-x64.zip
 
-# 3) Copy your bot
+# Copy in your bot code
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
-# 4) Launch gateway in background, then bot
-CMD bash -lc "\
-    /ibgw/ibgatewaystart.sh --nogui & \
-    sleep 15 && \
-    python 'covered call strategy.py' \
-"
+# Copy the entrypoint and make it executable
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Kick off the gateway + bot
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["covered call strategy.py"]
